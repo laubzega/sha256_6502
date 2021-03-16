@@ -1,4 +1,11 @@
-; ok for C64, adjust for other platforms
+; SHA-256 for 6502. Closely follows pseudocode from https://en.wikipedia.org/wiki/SHA-2
+
+.import popa
+.export _sha256_init, _sha256_finalize
+.export _sha256_next_block, _sha256_next_block_fastcall
+.export _sha256_hash
+
+; ZP location $35 is ok for the C64, adjust for other platforms
 data_ptr = $35
 
 	.segment "BSS"
@@ -28,7 +35,7 @@ ch:	.res 4
 maj: .res 4
 temp1: .res 4
 
-	; zeropage the most often used variables
+; zeropage the most often used variables
 	.ifdef __C64__
 F3 = $fb
 F2 = $fc
@@ -43,11 +50,6 @@ F0:	.res 1
 
 final_block_size: .res 1
 block_counter: .res 3
-
-.import popa
-.export _sha256_init, _sha256_finalize
-.export _buffer, _sha256_next_block, _sha256_next_block_fastcall
-.export _sha256_hash
 
 _sha256_hash = h0
 
@@ -254,7 +256,7 @@ normal_block:
 no_carry:
 size_wont_fit:
 
-
+; Expansion loop starts here
 _sha256:
 	ldx #16*4
 expand_loop:
@@ -293,7 +295,6 @@ expand_loop:
 	.endrep
 	
 	xor_32 F3, S0
-
 
 	; rightrotate 17
 	.repeat 4,I
@@ -346,10 +347,10 @@ expand_loop:
 	sta _buffer+(3-I),x
 	.endrep
 
-
-	.repeat 4
 	inx
-	.endrep
+	inx
+	inx
+	inx
 
 	beq end_expand_loop
 	jmp expand_loop
@@ -363,6 +364,7 @@ init_loop:
 	dex
 	bpl init_loop
 
+; Message compression loop starts here
 	ldx #0
 main_loop:
 .ifdef __C64__
