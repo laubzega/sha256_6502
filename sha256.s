@@ -387,14 +387,13 @@ main_loop:
 	xor_32 F3, S1
 
 	; ch := (e and f) xor ((not e) and g)
+	; optimized to: vec_sel(F, G, E)
+	; (see https://en.wikipedia.org/wiki/SHA-1#SHA-1_pseudocode)
 	.repeat 4,I
-	lda #255
-	eor EE+I
-	and GG+I
-	sta ch+I
-	lda EE+I
-	and FF+I
-	eor ch+I
+	lda FF+I
+	eor GG+I
+	and EE+I
+	eor GG+I
 	sta ch+I
 	.endrep
 
@@ -428,17 +427,17 @@ main_loop:
 	xor_32 F3, S0
 
 	; maj := (a and b) xor (a and c) xor (b and c)
+	; optimized to: vec_sel(A, B, B xor C)
+	; (see https://en.wikipedia.org/wiki/SHA-1#SHA-1_pseudocode)
 	.repeat 4,I
-	lda AA+I
-	and BB+I
-	sta maj+I 
-	lda AA+I
-	and CC+I
-	eor maj+I
-	sta maj+I
 	lda BB+I
-	and CC+I
-	eor maj+I
+	eor CC+I
+	sta maj+I
+
+	lda AA+I
+	eor BB+I
+	and maj+I
+	eor BB+I
 	sta maj+I
 	.endrep
 
