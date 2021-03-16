@@ -264,7 +264,7 @@ expand_loop:
 	; rightrotate 7
 	.repeat 4,I
 	lda _buffer+I-15*4,x
-	sta	F3 + (I + 1) .mod 4
+	sta F3 + (I + 1) .mod 4
 	.endrep
 
 	jsr rol1
@@ -273,7 +273,7 @@ expand_loop:
 	; rightrotate 18
 	.repeat 4,I
 	lda _buffer+I-15*4,x
-	sta	F3 + (I + 2) .mod 4
+	sta F3 + (I + 2) .mod 4
 	.endrep
 
 	jsr ror2
@@ -282,14 +282,14 @@ expand_loop:
 	; rightshift 3
 	.repeat 4,I
 	lda _buffer+I-15*4,x
-	sta	F3 + I
+	sta F3 + I
 	.endrep
 
 	.repeat 3
 	lsr F3
 	ror F2
 	ror F1
-	ror	F0
+	ror F0
 	.endrep
 	
 	xor_32 F3, S0
@@ -298,7 +298,7 @@ expand_loop:
 	; rightrotate 17
 	.repeat 4,I
 	lda _buffer+I-2*4,x
-	sta	F3 + (I + 2) .mod 4
+	sta F3 + (I + 2) .mod 4
 	.endrep
 
 	jsr ror1
@@ -307,7 +307,7 @@ expand_loop:
 	; rightrotate 19
 	.repeat 4,I
 	lda _buffer+I-2*4,x
-	sta	F3 + (I + 2) .mod 4
+	sta F3 + (I + 2) .mod 4
 	.endrep
 
 	jsr ror3
@@ -316,7 +316,7 @@ expand_loop:
 	; rightshift 10
 	.repeat 3,I
 	lda _buffer+I-2*4,x
-	sta	F2 + I
+	sta F2 + I
 	.endrep
 
 	lda #0
@@ -324,7 +324,7 @@ expand_loop:
 	.repeat 2
 	lsr F2
 	ror F1
-	ror	F0
+	ror F0
 	.endrep
 	
 	xor_32 F3, S1
@@ -351,8 +351,8 @@ expand_loop:
 	inx
 	.endrep
 
-	beq	end_expand_loop
-	jmp	expand_loop
+	beq end_expand_loop
+	jmp expand_loop
 end_expand_loop:
 
 
@@ -371,7 +371,7 @@ main_loop:
 	; S1 := (e rightrotate 6) xor (e rightrotate 11) xor (e rightrotate 25)
 	; rightrotate 6
 	mov_ror8_32 EE,F3
-	jsr	rol2
+	jsr rol2
 	mov_32 F3, S1
 
 	; rightrotate 11
@@ -386,7 +386,7 @@ main_loop:
 
 	; ch := (e and f) xor ((not e) and g)
 	.repeat 4,I
-	lda	#255
+	lda #255
 	eor EE+I
 	and GG+I
 	sta ch+I
@@ -412,7 +412,7 @@ main_loop:
 	; S0 := (a rightrotate 2) xor (a rightrotate 13) xor (a rightrotate 22)
 	; rightrotate 2
 	mov_32 AA, F3
-	jsr	ror2
+	jsr ror2
 	mov_32 F3, S0
 
 	; rightrotate 13
