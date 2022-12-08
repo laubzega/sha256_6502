@@ -25,11 +25,13 @@ int main()
 #endif
     int i, blocks = 64;
     char ok = 1;
+    unsigned char *SCROLY = (unsigned char *)53265U;
     data[63] = 0x0a;    // so that cc65 does not translate it to C64's newline.
 
     printf("\nSHA-256 for 6502 by Laubzega/WFMH'21\n\n");
     printf("Hashing %d blocks of 64 bytes", blocks);
 #ifdef __C64__
+    *SCROLY = 0;
     t_start = clock();
 #endif
     sha256_init();
@@ -56,9 +58,14 @@ int main()
             break;
         }
 
-    printf(ok ? "\nMATCH!\n" : "\nFAIL!?\n");
 #ifdef __C64__
     t_total = clock() - t_start;
+#endif
+
+    printf(ok ? "\nMATCH!\n" : "\nFAIL!?\n");
+
+#ifdef __C64__
+    *SCROLY = 27;
     secs = t_total / CLOCKS_PER_SEC;
     tens = 100 * (t_total - secs * CLOCKS_PER_SEC) / CLOCKS_PER_SEC;
     printf("\nTime: %d.%02d s (%ld bytes/s)\n", secs, tens, CLOCKS_PER_SEC * (64L * blocks) / t_total);
