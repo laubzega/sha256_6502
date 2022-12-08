@@ -4,7 +4,7 @@
 Just-for-fun implementation of SHA-256. It is much more computationally
 intensive than MD5, so this time I went for performance, code size be damned.
 What resulted is probably the fastest SHA-256 for the 6502, hashing at a
-blistering pace of 350 bytes/s on a C64. All that with a minimal use of ZP.
+blistering pace of 410 bytes/s on a C64. All that with a minimal use of ZP.
  
 You will need cc65 (https://github.com/cc65/cc65) to build.
 
