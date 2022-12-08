@@ -8,6 +8,14 @@
 ; ZP location $35 is ok for the C64, adjust for other platforms
 data_ptr = $35
 
+; offer simple visual feedback on the C64?
+__FEEDBACK__ = 0
+
+; Replace ror3/rol3 with LUT-based versions that are somewhat faster (68 vs 78 cycles)
+; at the expense of 1024 extra bytes needed for the tables.
+; Thanks to Francois R. Grieu for suggesting it.
+__SHIFT_3_LUT__ = 1
+
 	.segment "BSS"
 _buffer:
 	.res 64*4
@@ -129,6 +137,10 @@ init_const:
 	sta block_counter
 	sta block_counter + 1
 	sta block_counter + 2
+
+.if __SHIFT_3_LUT__
+	jsr prepare_luts
+.endif
 	rts
 
 copy_block_to_buffer:
@@ -260,7 +272,7 @@ size_wont_fit:
 _sha256:
 	ldx #16*4
 expand_loop:
-.ifdef __C64__
+.if .def(__C64__) && __FEEDBACK__
 	stx $d020
 .endif
 	; rightrotate 7
@@ -367,7 +379,7 @@ init_loop:
 ; Message compression loop starts here
 	ldx #0
 main_loop:
-.ifdef __C64__
+.if .def(__C64__) && __FEEDBACK__
 	inc $d020
 .endif
 	; S1 := (e rightrotate 6) xor (e rightrotate 11) xor (e rightrotate 25)
@@ -474,11 +486,17 @@ end_main_loop:
 
 	rts
 
-; Generate rol1, rol2, rol3, ror1, ror2, ror3 routines.
-	.repeat 3,SHIFT
-	.ident (.concat ("rol", .string(3-SHIFT))):
-	.repeat 3-SHIFT
+.if __SHIFT_3_LUT__
+GENERATED_ROLS=2
+.else
+GENERATED_ROLS=3
+.endif
+
+; Generate rol1, rol2, ror1, ror2 routines.
+	.repeat GENERATED_ROLS,SHIFT
+	.ident (.concat ("rol", .string((GENERATED_ROLS-SHIFT)))):
 	lda F3
+	.repeat GENERATED_ROLS-SHIFT
 	asl
 	rol F0
 	rol F1
@@ -488,10 +506,10 @@ end_main_loop:
 	rts
 	.endrep
 
-	.repeat 3,SHIFT
-	.ident (.concat ("ror", .string(3-SHIFT))):
-	.repeat 3-SHIFT
+	.repeat GENERATED_ROLS,SHIFT
+	.ident (.concat ("ror", .string((GENERATED_ROLS-SHIFT)))):
 	lda F0
+	.repeat GENERATED_ROLS-SHIFT
 	lsr
 	ror F3
 	ror F2
@@ -501,6 +519,88 @@ end_main_loop:
 	rts
 	.endrep
 
+.if __SHIFT_3_LUT__
+
+rol3:	; 36 + 32 = 68 cycles total
+
+	ldy F3
+	lda rored5,y
+	ldy F0
+	ora roled3,y
+	sta F0
+
+	lda rored5,y
+	ldy F1
+	ora roled3,y
+	sta F1
+
+	lda rored5,y
+	ldy F2
+	ora roled3,y
+	sta F2
+
+	lda rored5,y
+	ldy F3
+	ora roled3,y
+	sta F3
+
+	rts
+
+ror3:
+	ldy F0
+	lda roled5,y
+	ldy F3
+	ora rored3,y
+	sta F3
+
+	lda roled5,y
+	ldy F2
+	ora rored3,y
+	sta F2
+
+	lda roled5,y
+	ldy F1
+	ora rored3,y
+	sta F1
+
+	lda roled5,y
+	ldy F0
+	ora rored3,y
+	sta F0
+
+	rts
+
+
+
+prepare_luts:
+	ldy #0
+lut_loop:
+	tya
+	asl
+	asl
+	asl
+	sta roled3,y
+
+	asl
+	asl
+	sta roled5,y
+
+	tya
+	lsr
+	lsr
+	lsr
+	sta rored3,y
+
+	lsr
+	lsr
+	sta rored5,y
+
+	dey
+	bne lut_loop
+
+	rts
+
+.endif
 
 .segment "DATA"
 k_table:
@@ -522,5 +622,17 @@ initial_consts:
 	.dbyt $9b05, $688c
 	.dbyt $1f83, $d9ab
 	.dbyt $5be0, $cd19
+
+.if __SHIFT_3_LUT__
+	.align 256
+roled3:
+	.res 256
+roled5:
+	.res 256
+rored3:
+	.res 256
+rored5:
+	.res 256
+.endif
 
 ; vim: set autoindent noexpandtab tabstop=4 shiftwidth=4 :
